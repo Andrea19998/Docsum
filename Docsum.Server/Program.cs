@@ -1,17 +1,28 @@
 using Docsum.Infrastructure;
 using Docsum.Application.Auth;
+using Docsum.Application.Chat;
+using Docsum.Application.Documents;
+using Docsum.Application.Folders;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var storagePath = builder.Configuration["Storage:Path"]
+                  ?? Path.Combine(builder.Environment.ContentRootPath, "storage");
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Add services to the container.
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")!);
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("Default")!, storagePath, builder.Configuration);
+
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<FolderService>();
+builder.Services.AddScoped<ChatService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

@@ -1,0 +1,29 @@
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.uploaded {
+    background-color: rgba(217, 155, 127, 0.18);
+    color: var(--accent-bright);
+}
+
+.processing {
+    background-color: rgba(96, 165, 250, 0.18);
+    color: #93c5fd;
+}
+
+.done {
+    background-color: rgba(74, 222, 128, 0.16);
+    color: #86efac;
+}
+
+.failed {
+    background-color: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+}

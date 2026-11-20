@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docsum.Application", "Docsu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docsum.Infrastructure", "Docsum.Infrastructure\Docsum.Infrastructure.csproj", "{755A4663-F5BF-4B42-82D6-E0C068AFC9C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docsum.Application.Tests", "Docsum.Application.Tests\Docsum.Application.Tests.csproj", "{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +68,18 @@ Global
 		{755A4663-F5BF-4B42-82D6-E0C068AFC9C4}.Release|x64.Build.0 = Release|Any CPU
 		{755A4663-F5BF-4B42-82D6-E0C068AFC9C4}.Release|x86.ActiveCfg = Release|Any CPU
 		{755A4663-F5BF-4B42-82D6-E0C068AFC9C4}.Release|x86.Build.0 = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|x64.Build.0 = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Debug|x86.Build.0 = Debug|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|x64.ActiveCfg = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|x64.Build.0 = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|x86.ActiveCfg = Release|Any CPU
+		{CEE70B40-3BF2-4F07-87B7-AE82F4F7A262}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
