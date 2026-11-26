@@ -79,27 +79,42 @@ Uploaded files are written to `Docsum.Server/storage` by default. Override with
 ## AI configuration (optional)
 
 Text extraction works without AI. Summaries and chat require an OpenAI-compatible
-endpoint (OpenAI, Azure OpenAI, OpenRouter, Gemini's OpenAI-compatible API, …):
+endpoint (OpenAI, Groq, Azure OpenAI, OpenRouter, Gemini's OpenAI-compatible API, …).
+`appsettings.json` ships with Groq defaults, so only the key is required:
 
 ```bash
-dotnet user-secrets set "Ai:BaseUrl" "https://api.openai.com/v1"
-dotnet user-secrets set "Ai:Model"   "gpt-4o-mini"
-dotnet user-secrets set "Ai:ApiKey"  "sk-..."
+dotnet user-secrets set "Ai:ApiKey" "gsk_..." --project Docsum.Server
 ```
+
+Or point it at another provider (these override `appsettings.json`):
+
+```bash
+dotnet user-secrets set "Ai:BaseUrl" "https://api.openai.com/v1" --project Docsum.Server
+dotnet user-secrets set "Ai:Model"   "gpt-4o-mini"              --project Docsum.Server
+dotnet user-secrets set "Ai:ApiKey"  "sk-..."                   --project Docsum.Server
+```
+
+Restart the API after changing these — options are bound at startup.
 
 Other settings:
 
 ```jsonc
 "Ai": {
-  "BaseUrl": "https://api.openai.com/v1",
-  "Model": "gpt-4o-mini",
+  "BaseUrl": "https://api.groq.com/openai/v1",
+  "Model": "openai/gpt-oss-120b",
   "ApiKey": "",          // keep out of appsettings.json; use user-secrets/env vars
   "TimeoutSeconds": 120
 }
 ```
 
+Groq's free tier is enough for development (~1,000 requests/day, 8K tokens/minute on
+`openai/gpt-oss-120b`). Model names change: `GET /openai/v1/models` with your key lists
+what is currently available.
+
 Without a key the API still extracts text and marks documents `Done`; `summary`
-stays `null` and chat returns `503`.
+stays `null` and chat returns `503`. Once a key is configured, open a document and use
+**Generate summary** (or `POST /api/documents/{id}/summarize`) to summarize documents
+that were processed earlier.
 
 > **Privacy:** letters are sent to the configured provider when summaries or chat
 > answers are generated. These are often sensitive tax/insurance documents. Use a
@@ -146,6 +161,7 @@ All document/folder/chat routes require the `auth_token` cookie.
 | `GET` | `/api/documents/{id}` | detail incl. `summary`, `errorMessage`, `folderId` |
 | `POST` | `/api/documents` | multipart: `file`, optional `folderId` |
 | `PATCH` | `/api/documents/{id}` | `{ folderId }` — move (`null` = root) |
+| `POST` | `/api/documents/{id}/summarize` | regenerate the summary with the configured AI |
 | `DELETE` | `/api/documents/{id}` | removes DB row and stored file |
 
 ### Chat
@@ -176,5 +192,5 @@ curl -b cookies.txt -H "Content-Type: application/json" \
 dotnet test
 ```
 
-Tests cover authentication, document upload/move/delete, folder validation and
-cycle prevention, and chat behaviour (including AI-unavailable paths).
+Tests cover authentication, document upload/move/delete/summarize, folder validation
+and cycle prevention, and chat behaviour (including AI-unavailable paths).

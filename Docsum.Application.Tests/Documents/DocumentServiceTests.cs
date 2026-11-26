@@ -9,11 +9,12 @@ public class DocumentServiceTests
     private readonly FakeDocumentRepository _documents = new();
     private readonly FakeFileStorage _storage = new();
     private readonly FakeFolderRepository _folders = new();
+    private readonly FakeDocumentSummarizer _summarizer = new();
     private readonly DocumentService _sut;
 
     public DocumentServiceTests()
     {
-        _sut = new DocumentService(_documents, _storage, _folders);
+        _sut = new DocumentService(_documents, _storage, _folders, _summarizer);
     }
 
     private static MemoryStream Pdf() => new("%PDF-1.7 fake content"u8.ToArray());
@@ -160,5 +161,87 @@ public class DocumentServiceTests
         Assert.True(deleted);
         Assert.Empty(_documents.Items);
         Assert.False(_storage.Files.ContainsKey(storedName));
+    }
+
+    [Fact]
+    public async Task Summarize_DoneDocument_StoresSummary()
+    {
+        _documents.Items.Add(new Document
+        {
+            Id = 10, UserId = _sampleUserId, FileName = "letter.pdf",
+            Status = DocumentStatus.Done, ExtractedText = "Sehr geehrter Herr ..."
+        });
+
+        var outcome = await _sut.SummarizeAsync(_sampleUserId, 10, CancellationToken.None);
+
+        Assert.True(outcome.Success);
+        Assert.Equal(_summarizer.Summary, _documents.Items[0].Summary);
+        Assert.Equal(_summarizer.Summary, outcome.Value!.Summary);
+        Assert.Single(_summarizer.Calls);
+    }
+
+    [Fact]
+    public async Task Summarize_WhileProcessing_ReturnsNotReady()
+    {
+        _documents.Items.Add(new Document
+        {
+            Id = 11, UserId = _sampleUserId, FileName = "letter.pdf",
+            Status = DocumentStatus.Processing, ExtractedText = null
+        });
+
+        var outcome = await _sut.SummarizeAsync(_sampleUserId, 11, CancellationToken.None);
+
+        Assert.Equal(SummarizeError.NotReady, outcome.Error);
+        Assert.Empty(_summarizer.Calls);
+    }
+
+    [Fact]
+    public async Task Summarize_WhenAiNotConfigured_ReturnsAiUnavailable()
+    {
+        _summarizer.IsConfigured = false;
+        _documents.Items.Add(new Document
+        {
+            Id = 12, UserId = _sampleUserId, FileName = "letter.pdf",
+            Status = DocumentStatus.Done, ExtractedText = "Sehr geehrter Herr ..."
+        });
+
+        var outcome = await _sut.SummarizeAsync(_sampleUserId, 12, CancellationToken.None);
+
+        Assert.Equal(SummarizeError.AiUnavailable, outcome.Error);
+        Assert.Null(_documents.Items[0].Summary);
+        Assert.Empty(_summarizer.Calls);
+    }
+
+    [Fact]
+    public async Task Summarize_WhenProviderFails_ReturnsFailed_AndKeepsPreviousSummary()
+    {
+        _summarizer.Error = new InvalidOperationException("Provider returned 429");
+        _documents.Items.Add(new Document
+        {
+            Id = 13, UserId = _sampleUserId, FileName = "letter.pdf",
+            Status = DocumentStatus.Done, ExtractedText = "Sehr geehrter Herr ...",
+            Summary = "old summary"
+        });
+
+        var outcome = await _sut.SummarizeAsync(_sampleUserId, 13, CancellationToken.None);
+
+        Assert.Equal(SummarizeError.Failed, outcome.Error);
+        Assert.Contains("429", outcome.Message);
+        Assert.Equal("old summary", _documents.Items[0].Summary);
+    }
+
+    [Fact]
+    public async Task Summarize_DocumentOfAnotherUser_ReturnsNotFound()
+    {
+        _documents.Items.Add(new Document
+        {
+            Id = 14, UserId = _sampleUserId, FileName = "letter.pdf",
+            Status = DocumentStatus.Done, ExtractedText = "Sehr geehrter Herr ..."
+        });
+
+        var outcome = await _sut.SummarizeAsync(_otherUserId, 14, CancellationToken.None);
+
+        Assert.Equal(SummarizeError.NotFound, outcome.Error);
+        Assert.Empty(_summarizer.Calls);
     }
 }

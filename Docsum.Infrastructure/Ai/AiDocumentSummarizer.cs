@@ -6,6 +6,8 @@ public class AiDocumentSummarizer(IChatCompletion chat) : IDocumentSummarizer
 {
     private const int MaxChars = 15000;
 
+    public bool IsConfigured => chat.IsConfigured;
+
     public async Task<string?> SummarizeAsync(string text, CancellationToken ct)
     {
         if (!chat.IsConfigured || string.IsNullOrWhiteSpace(text)) return null;

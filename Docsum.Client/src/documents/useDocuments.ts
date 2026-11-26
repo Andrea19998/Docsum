@@ -6,6 +6,7 @@ import {
     getDocument,
     listDocuments,
     moveDocument,
+    summarizeDocument,
     uploadDocument,
 } from './api.ts';
 
@@ -84,5 +85,17 @@ export function useAskDocument(id: number) {
     return useMutation({
         mutationFn: (question: string) => askDocument(id, question),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents', id, 'chat'] }),
+    });
+}
+
+export function useSummarizeDocument(id: number) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: () => summarizeDocument(id),
+        onSuccess: (doc) => {
+            queryClient.setQueryData(['documents', id], doc);
+            queryClient.invalidateQueries({ queryKey: documentsKey });
+        },
     });
 }

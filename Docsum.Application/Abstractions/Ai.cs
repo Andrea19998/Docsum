@@ -18,6 +18,9 @@ public interface IDocumentTextExtractor
 
 public interface IDocumentSummarizer
 {
+    /// <summary>False when no provider is configured; callers should skip instead of calling.</summary>
+    bool IsConfigured { get; }
+
     /// <summary>Returns null when AI is not configured; extraction still succeeds.</summary>
     Task<string?> SummarizeAsync(string text, CancellationToken ct);
 }

@@ -7,6 +7,7 @@ import {
     useDeleteDocument,
     useDocument,
     useMoveDocument,
+    useSummarizeDocument,
 } from '../documents/useDocuments.ts';
 import { useFolders } from '../folders/useFolders.ts';
 import { flattenFolders } from '../folders/utils.ts';
@@ -29,6 +30,7 @@ function DocumentPage() {
     const remove = useDeleteDocument();
     const history = useChatHistory(id);
     const ask = useAskDocument(id);
+    const resummarize = useSummarizeDocument(id);
 
     const [question, setQuestion] = useState('');
 
@@ -135,7 +137,21 @@ function DocumentPage() {
                     )}
 
                     <section className={`${styles.card} ${styles.summaryCard}`}>
-                        <h2 className={styles.cardTitle}>Summary</h2>
+                        <div className={styles.summaryHeader}>
+                            <h2 className={styles.cardTitle}>Summary</h2>
+                            {doc.status === 'Done' && (
+                                <button
+                                    type="button"
+                                    className={styles.summaryButton}
+                                    disabled={resummarize.isPending}
+                                    onClick={() => resummarize.mutate()}
+                                >
+                                    {resummarize.isPending
+                                        ? 'Generating...'
+                                        : doc.summary ? 'Regenerate' : 'Generate summary'}
+                                </button>
+                            )}
+                        </div>
                         {doc.status === 'Uploaded' || doc.status === 'Processing' ? (
                             <p className={styles.hint}>
                                 Processing this letter. The summary will appear here shortly.
@@ -144,8 +160,11 @@ function DocumentPage() {
                             <p className={styles.summary}>{doc.summary}</p>
                         ) : (
                             <p className={styles.hint}>
-                                No summary available. Add an AI provider key to generate summaries.
+                                No summary yet. Generate one with the configured AI provider.
                             </p>
+                        )}
+                        {resummarize.isError && (
+                            <p className={styles.error}>{resummarize.error.message}</p>
                         )}
                     </section>
 

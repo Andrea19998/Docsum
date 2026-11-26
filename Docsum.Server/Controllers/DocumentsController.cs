@@ -54,6 +54,21 @@ public class DocumentsController(DocumentService documents, ChatService chat) : 
     public async Task<IActionResult> Delete(int id, CancellationToken ct) =>
         await documents.DeleteAsync(UserId, id, ct) ? NoContent() : NotFound();
 
+    [HttpPost("{id:int}/summarize")]
+    public async Task<IActionResult> Summarize(int id, CancellationToken ct)
+    {
+        var outcome = await documents.SummarizeAsync(UserId, id, ct);
+        if (outcome.Success) return Ok(outcome.Value);
+
+        return outcome.Error switch
+        {
+            SummarizeError.NotFound => NotFound(),
+            SummarizeError.NotReady => BadRequest(new { error = outcome.Message }),
+            SummarizeError.AiUnavailable => StatusCode(503, new { error = outcome.Message }),
+            _ => StatusCode(502, new { error = outcome.Message })
+        };
+    }
+
     [HttpGet("{id:int}/chat")]
     public async Task<IActionResult> ChatHistory(int id, CancellationToken ct)
     {

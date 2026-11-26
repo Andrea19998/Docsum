@@ -28,6 +28,9 @@ export const moveDocument = (id: number, folderId: number | null) =>
 export const deleteDocument = (id: number) =>
     api<void>(`/api/documents/${id}`, { method: 'DELETE' });
 
+export const summarizeDocument = (id: number) =>
+    api<DocumentDetail>(`/api/documents/${id}/summarize`, { method: 'POST' });
+
 export const getChatHistory = (id: number) =>
     api<ChatMessage[]>(`/api/documents/${id}/chat`);
 

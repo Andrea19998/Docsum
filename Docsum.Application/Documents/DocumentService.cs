@@ -7,7 +7,8 @@ namespace Docsum.Application.Documents;
 public class DocumentService(
     IDocumentRepository documents,
     IFileStorage storage,
-    IFolderRepository folders)
+    IFolderRepository folders,
+    IDocumentSummarizer summarizer)
 {
     public const long MaxSizeBytes = 10 * 1024 * 1024;
     private static readonly byte[] PdfMagic = "%PDF-"u8.ToArray();
@@ -60,11 +61,50 @@ public class DocumentService(
     public async Task<DocumentDetailDto?> GetAsync(int userId, int documentId, CancellationToken ct)
     {
         var d = await documents.GetAsync(userId, documentId, ct);
-        return d is null
-            ? null
-            : new DocumentDetailDto(
-                d.Id, d.FileName, d.FolderId, d.Status, d.CreatedAt, d.Summary, d.ErrorMessage);
+        return d is null ? null : ToDetail(d);
     }
+
+    /// <summary>
+    /// Regenerates the summary on demand. Useful when AI was configured after the
+    /// document was processed, or when a previous summary attempt failed.
+    /// </summary>
+    public async Task<SummarizeOutcome> SummarizeAsync(
+        int userId, int documentId, CancellationToken ct)
+    {
+        var document = await documents.GetAsync(userId, documentId, ct);
+        if (document is null) return SummarizeOutcome.NotFound();
+
+        if (document.Status != DocumentStatus.Done ||
+            string.IsNullOrWhiteSpace(document.ExtractedText))
+            return SummarizeOutcome.NotReady(
+                "This document is still being processed. Try again shortly.");
+
+        if (!summarizer.IsConfigured)
+            return SummarizeOutcome.AiUnavailable(
+                "AI is not configured. Set Ai:BaseUrl, Ai:Model and Ai:ApiKey in user-secrets.");
+
+        string? summary;
+        try
+        {
+            summary = await summarizer.SummarizeAsync(document.ExtractedText, ct);
+        }
+        catch (Exception ex)
+        {
+            // Keep any previous summary; only report the failure.
+            return SummarizeOutcome.Failed($"Summary generation failed: {ex.Message}");
+        }
+
+        if (string.IsNullOrWhiteSpace(summary))
+            return SummarizeOutcome.Failed("The AI returned an empty summary.");
+
+        document.Summary = summary.Trim();
+        await documents.SaveAsync(document, ct);
+
+        return SummarizeOutcome.Ok(ToDetail(document));
+    }
+
+    private static DocumentDetailDto ToDetail(Document d) =>
+        new(d.Id, d.FileName, d.FolderId, d.Status, d.CreatedAt, d.Summary, d.ErrorMessage);
 
     public async Task<Result<DocumentListItemDto>> MoveAsync(
         int userId, int documentId, int? folderId, CancellationToken ct)
